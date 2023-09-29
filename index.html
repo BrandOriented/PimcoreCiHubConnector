@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>DataHub REST Adapter – Swagger UI</title>
-    <redoc spec-url="/swagger.json"></redoc>
+    <redoc spec-url="/swagger.json"
+       required-props-first=true
+       theme='{
+         "sidebar": {
+           "backgroundColor": "lightblue"
+         }
+       }'
+    ></redoc>
 </head>
 <body>
 <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
