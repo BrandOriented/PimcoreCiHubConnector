@@ -10,14 +10,285 @@
         "version": "2.1.8.1"
     },
     "paths": {
-        "\/datahub\/rest\/{config}\/element": {
+        "\/datahub\/rest\/{config}\/asset": {
+            "post": {
+                "tags": [
+                    "Asset",
+                    "Asset"
+                ],
+                "summary": "Add asset",
+                "description": "Simple method to create and upload asset",
+                "operationId": "post_datahub_rest_endpoints_asset_upload",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
+                    },
+                    {
+                        "name": "config",
+                        "in": "path",
+                        "description": "Name of the config.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type of elements \u2013 asset or object.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asset",
+                                "object"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parentId",
+                        "in": "query",
+                        "description": "Parent ID of element.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart\/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "file"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation.",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "description": "Asset ID",
+                                            "type": "integer"
+                                        },
+                                        "path": {
+                                            "description": "Asset path",
+                                            "type": "string"
+                                        },
+                                        "success": {
+                                            "description": "Succes response",
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Not found"
+                    },
+                    "401": {
+                        "description": "Access denied"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "\/datahub\/rest\/{config}\/asset\/update": {
+            "post": {
+                "tags": [
+                    "Asset",
+                    "Asset"
+                ],
+                "summary": "Update asset",
+                "description": "Simple method to update and upload asset",
+                "operationId": "post_datahub_rest_endpoints_asset_update",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
+                    },
+                    {
+                        "name": "config",
+                        "in": "path",
+                        "description": "Name of the config.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type of elements \u2013 asset or object.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asset",
+                                "object"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "Element ID.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart\/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "file"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation.",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "description": "Asset ID",
+                                            "type": "integer"
+                                        },
+                                        "path": {
+                                            "description": "Asset path",
+                                            "type": "string"
+                                        },
+                                        "success": {
+                                            "description": "Succes response",
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Not found"
+                    },
+                    "401": {
+                        "description": "Access denied"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "\/datahub\/rest\/{config}\/asset\/download": {
             "get": {
                 "tags": [
                     "Asset"
                 ],
+                "summary": "Download Asset",
+                "description": "Method to download binary file by asset ID.",
+                "operationId": "get_datahub_rest_endpoints_asset_download",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
+                    },
+                    {
+                        "name": "config",
+                        "in": "path",
+                        "description": "Name of the config.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "ID of element.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "thumbnail",
+                        "in": "query",
+                        "description": "Thumbnail config nae",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation."
+                    },
+                    "400": {
+                        "description": "Not found"
+                    },
+                    "401": {
+                        "description": "Access denied"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "\/datahub\/rest\/{config}\/element": {
+            "get": {
+                "tags": [
+                    "Element"
+                ],
                 "summary": "Get Element (eg. Asset, Object)",
                 "description": "Method to get one single element by type and ID.",
-                "operationId": "get_datahub_rest_endpoints_get_element",
+                "operationId": "get_datahub_rest_endpoints_element_get",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -99,11 +370,11 @@
             },
             "delete": {
                 "tags": [
-                    "Asset"
+                    "Element"
                 ],
                 "summary": "Delete Element (eg. Asset, Object)",
                 "description": "Method to delete a single element by type and ID.",
-                "operationId": "delete_datahub_rest_endpoints_delete_element",
+                "operationId": "delete_datahub_rest_endpoints_element_delete",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -183,11 +454,11 @@
         "\/datahub\/rest\/{config}\/element\/version": {
             "get": {
                 "tags": [
-                    "Asset"
+                    "Element"
                 ],
                 "summary": "Get Version of Element (eg. Asset, Object)",
                 "description": "Method to get a specified version of the element by type and ID.",
-                "operationId": "get_datahub_rest_endpoints_version",
+                "operationId": "get_datahub_rest_endpoints_element_version",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -317,11 +588,11 @@
         "\/datahub\/rest\/{config}\/element\/versions": {
             "get": {
                 "tags": [
-                    "Asset"
+                    "Element"
                 ],
                 "summary": "Get all Versions of Element (eg. Asset, Object)",
                 "description": "Method to get all versions of the element by type and ID.",
-                "operationId": "get_datahub_rest_endpoints_versions",
+                "operationId": "get_datahub_rest_endpoints_element_versions",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -445,11 +716,11 @@
         "\/datahub\/rest\/{config}\/element\/lock": {
             "post": {
                 "tags": [
-                    "Asset"
+                    "Element"
                 ],
                 "summary": "Lock Asset",
                 "description": "Method to lock single element by type and ID.",
-                "operationId": "post_datahub_rest_endpoints_lock_element",
+                "operationId": "post_datahub_rest_endpoints_element_lock",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -529,11 +800,11 @@
         "\/datahub\/rest\/{config}\/element\/unlock": {
             "post": {
                 "tags": [
-                    "Asset"
+                    "Element"
                 ],
                 "summary": "Unlock Asset",
                 "description": "Method to unlock single element by type and ID.",
-                "operationId": "post_datahub_rest_endpoints_unlock_element",
+                "operationId": "post_datahub_rest_endpoints_element_unlock",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -592,69 +863,6 @@
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "description": "Not found"
-                    },
-                    "401": {
-                        "description": "Access denied"
-                    },
-                    "500": {
-                        "description": "Server error"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "\/datahub\/rest\/{config}\/asset\/download": {
-            "get": {
-                "tags": [
-                    "Asset"
-                ],
-                "summary": "Download Asset",
-                "description": "Method to download binary file by asset ID.",
-                "operationId": "get_datahub_rest_endpoints_download_asset",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
-                    },
-                    {
-                        "name": "config",
-                        "in": "path",
-                        "description": "Name of the config.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "query",
-                        "description": "ID of element.",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "thumbnail",
-                        "in": "query",
-                        "description": "Thumbnail config nae",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful operation."
                     },
                     "400": {
                         "description": "Not found"
@@ -1115,220 +1323,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset": {
-            "post": {
-                "tags": [
-                    "Asset"
-                ],
-                "summary": "Add asset",
-                "description": "Simple method to create and upload asset",
-                "operationId": "post_datahub_rest_endpoints_asset_upload_asset",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
-                    },
-                    {
-                        "name": "config",
-                        "in": "path",
-                        "description": "Name of the config.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "query",
-                        "description": "Type of elements \u2013 asset or object.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "asset",
-                                "object"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "parentId",
-                        "in": "query",
-                        "description": "Parent ID of element.",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "multipart\/form-data": {
-                            "schema": {
-                                "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                },
-                                "type": "file"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful operation.",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "description": "Asset ID",
-                                            "type": "integer"
-                                        },
-                                        "path": {
-                                            "description": "Asset path",
-                                            "type": "string"
-                                        },
-                                        "success": {
-                                            "description": "Succes response",
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Not found"
-                    },
-                    "401": {
-                        "description": "Access denied"
-                    },
-                    "500": {
-                        "description": "Server error"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "\/datahub\/rest\/{config}\/asset\/update": {
-            "post": {
-                "tags": [
-                    "Asset"
-                ],
-                "summary": "Update asset",
-                "description": "Simple method to update and upload asset",
-                "operationId": "post_datahub_rest_endpoints_asset_update_asset",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "description": "Bearer (in Swagger UI use authorize feature to set header)"
-                    },
-                    {
-                        "name": "config",
-                        "in": "path",
-                        "description": "Name of the config.",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "type",
-                        "in": "query",
-                        "description": "Type of elements \u2013 asset or object.",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "asset",
-                                "object"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "id",
-                        "in": "query",
-                        "description": "Element ID.",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "multipart\/form-data": {
-                            "schema": {
-                                "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                },
-                                "type": "file"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Successful operation.",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "description": "Asset ID",
-                                            "type": "integer"
-                                        },
-                                        "path": {
-                                            "description": "Asset path",
-                                            "type": "string"
-                                        },
-                                        "success": {
-                                            "description": "Succes response",
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Not found"
-                    },
-                    "401": {
-                        "description": "Access denied"
-                    },
-                    "500": {
-                        "description": "Server error"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "\/datahub\/rest\/{config}\/asset\/upload\/start": {
+        "\/datahub\/rest\/{config}\/upload\/start": {
             "get": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "Get upload session",
                 "description": "Return information about an upload session.",
-                "operationId": "get_datahub_rest_endpoints_asset_upload_start_get",
+                "operationId": "get_datahub_rest_endpoints_upload_upload_start_get",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1373,7 +1375,7 @@
                 ],
                 "summary": "Create an upload session for a new or existing asset",
                 "description": "Creates an upload session for a new or existing asset.",
-                "operationId": "post_datahub_rest_endpoints_asset_upload_start",
+                "operationId": "post_datahub_rest_endpoints_upload_upload_start",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1442,14 +1444,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset\/upload\/{id}": {
+        "\/datahub\/rest\/{config}\/upload\/{id}": {
             "delete": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "Remove upload session",
                 "description": "Abort an upload session and discard all data uploaded.",
-                "operationId": "delete_datahub_rest_endpoints_asset_upload_abort",
+                "operationId": "delete_datahub_rest_endpoints_upload_upload_abort",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1489,14 +1491,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset\/upload\/{id}\/commit": {
+        "\/datahub\/rest\/{config}\/upload\/{id}\/commit": {
             "post": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "Commit upload session",
                 "description": "Close an upload session and create a file from the uploaded chunks.",
-                "operationId": "post_datahub_rest_endpoints_asset_upload_commit",
+                "operationId": "post_datahub_rest_endpoints_upload_upload_commit",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1546,14 +1548,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset\/upload\/{id}\/parts": {
+        "\/datahub\/rest\/{config}\/upload\/{id}\/parts": {
             "get": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "List parts",
                 "description": "Return a list of the chunks uploaded to the upload session so far.",
-                "operationId": "get_datahub_rest_endpoints_asset_upload_list_parts",
+                "operationId": "get_datahub_rest_endpoints_upload_upload_list_parts",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1648,14 +1650,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset\/upload\/{id}\/part": {
+        "\/datahub\/rest\/{config}\/upload\/{id}\/part": {
             "put": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "Upload part of file",
                 "description": "Return the status of the upload.",
-                "operationId": "put_datahub_rest_endpoints_asset_upload_part",
+                "operationId": "put_datahub_rest_endpoints_upload_upload_part",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1711,14 +1713,14 @@
                 ]
             }
         },
-        "\/datahub\/rest\/{config}\/asset\/upload\/{id}\/status": {
+        "\/datahub\/rest\/{config}\/upload\/{id}\/status": {
             "get": {
                 "tags": [
                     "Uploads (Chunked)"
                 ],
                 "summary": "Get upload status",
                 "description": "Return the status of the upload.",
-                "operationId": "get_datahub_rest_endpoints_asset_upload_status",
+                "operationId": "get_datahub_rest_endpoints_upload_upload_status",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1765,7 +1767,7 @@
                 ],
                 "summary": "Get me",
                 "description": "Get information about me",
-                "operationId": "get_datahub_rest_endpoints_asset_me",
+                "operationId": "get_datahub_rest_endpoints_user_me",
                 "parameters": [
                     {
                         "name": "Authorization",
