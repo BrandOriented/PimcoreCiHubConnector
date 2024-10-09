@@ -330,11 +330,19 @@ final readonly class IndexPersistenceService
             throw new \InvalidArgumentException('This element type is currently not supported.');
         }
 
-        return $this->client->index([
+        $isAsync = $this->client->getAsync();
+
+        $this->client->setAsync(true);
+
+        $index = $this->client->index([
             'index' => $indexName,
             'type' => '_doc',
             'id' => $element->getId(),
             'body' => $body,
-        ])->asArray();
+        ]);
+
+        $this->client->setAsync($isAsync);
+
+        return [];
     }
 }
