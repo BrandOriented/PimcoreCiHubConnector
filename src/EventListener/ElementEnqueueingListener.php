@@ -56,10 +56,25 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
 
     public function enqueueAsset(AssetEvent $assetEvent): void
     {
+        //do not update index when auto save or only saving version
+        /**
+         * @TODO - add this as a part of every update methods
+         */
+        if (
+            ($assetEvent->hasArgument('isAutoSave') && $assetEvent->getArgument('isAutoSave')) ||
+            ($assetEvent->hasArgument('saveVersionOnly') && $assetEvent->getArgument('saveVersionOnly'))
+        ) {
+            return;
+        }
+
         $asset = $assetEvent->getAsset();
 
         $configurations = $this->compositeConfigurationLoader->loadConfigs();
 
+        /**
+         * @TODO - remove loop
+         * @TODO - move all of it to queue
+         */
         foreach ($configurations as $configuration) {
             $name = $configuration->getName();
             $reader = new ConfigReader($configuration->getConfiguration());
