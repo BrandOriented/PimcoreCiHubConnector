@@ -31,16 +31,19 @@ class CorsListener implements EventSubscriberInterface
 
     public function onKernelResponse(ResponseEvent $event): void
     {
-        if (HttpKernelInterface::MAIN_REQUEST !== $event->getRequestType()) {
+        if (!$event->isMainRequest()) {
             $this->logger->debug('Not a master type request, skipping CORS checks.');
 
             return;
         }
-        if (!str_starts_with($event->getRequest()->get('_route'), 'datahub_rest_endpoints')) {
+
+        $route = $event->getRequest()->get('_route');
+        if (!is_string($route) || !str_starts_with($route, 'datahub_rest_endpoints')) {
             $this->logger->debug('Not a datahub request, skipping CORS checks.');
 
             return;
         }
+
         $crossOriginHeaders = [
             'Access-Control-Max-Age' => 600,
             'Access-Control-Allow-Origin' => '*',
@@ -70,13 +73,13 @@ class CorsListener implements EventSubscriberInterface
         ];
 
         $request = $event->getRequest();
-        if($request->headers->has('Origin')) {
+        if ($request->headers->has('Origin')) {
             $crossOriginHeaders['Access-Control-Allow-Origin'] = $request->headers->get('Origin');
         }
-        if($request->headers->has('Access-Control-Allow-Headers')) {
+        if ($request->headers->has('Access-Control-Allow-Headers')) {
             $crossOriginHeaders['Access-Control-Allow-Headers'][] = $request->headers->get('Access-Control-Allow-Headers');
         }
-        if($request->headers->has('Access-Control-Request-Method')) {
+        if ($request->headers->has('Access-Control-Request-Method')) {
             $crossOriginHeaders['Access-Control-Allow-Methods'][] = $request->headers->get('Access-Control-Request-Method');
         }
 
