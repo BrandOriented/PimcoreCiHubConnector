@@ -22,9 +22,10 @@ use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\SettingsStore;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-final readonly class RebuildUpdateIndexElementMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+final readonly class RebuildUpdateIndexElementMessageHandler
 {
     public function __construct(private IndexManager $indexManager, private IndexPersistenceService $indexPersistenceService)
     {

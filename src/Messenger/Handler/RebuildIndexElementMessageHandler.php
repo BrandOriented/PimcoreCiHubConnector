@@ -25,10 +25,11 @@ use Pimcore\Model\Asset\Folder;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\SettingsStore;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-final readonly class RebuildIndexElementMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+final readonly class RebuildIndexElementMessageHandler
 {
     public const CHUNK_SIZE = 100;
 
