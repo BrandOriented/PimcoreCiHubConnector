@@ -20,6 +20,7 @@ use CIHub\Bundle\SimpleRESTAdapterBundle\EventListener\ExceptionListener;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Loader\CompositeConfigurationLoader;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\IndexManager;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
@@ -37,7 +38,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->args([
             service(CompositeConfigurationLoader::class),
             service(IndexManager::class),
-            service(IndexPersistenceService::class),
+            service(MessageBusInterface::class),
+            service('logger'),
         ])
         ->tag('kernel.event_subscriber');
 

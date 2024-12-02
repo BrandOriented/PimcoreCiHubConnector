@@ -50,10 +50,10 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
     }
 
     public function __construct(
-        private LoggerInterface $logger,
-        private MessageBusInterface $messageBus,
         private CompositeConfigurationLoader $compositeConfigurationLoader,
         private IndexManager $indexManager,
+        private MessageBusInterface $messageBus,
+        private LoggerInterface $logger,
     ) {
     }
 

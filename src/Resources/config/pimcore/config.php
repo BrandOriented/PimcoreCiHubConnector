@@ -11,8 +11,10 @@
  */
 declare(strict_types=1);
 
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\DeleteIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\RebuildIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\RebuildUpdateIndexElementMessage;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\UpdateIndexElementMessage;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -32,6 +34,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
             'routing' => [
                 RebuildIndexElementMessage::class => 'datahub_es_index_queue',
                 RebuildUpdateIndexElementMessage::class => 'datahub_es_index_queue',
+                UpdateIndexElementMessage::class => 'datahub_es_index_queue',
+                DeleteIndexElementMessage::class => 'datahub_es_index_queue',
             ],
         ],
     ]);

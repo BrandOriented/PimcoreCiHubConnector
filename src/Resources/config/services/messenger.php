@@ -44,7 +44,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->args([
             service(IndexManager::class),
             service(IndexPersistenceService::class),
-            service(LoggerInterface::class),
+            service('logger'),
         ])
         ->tag('messenger.message_handler');
 
@@ -52,7 +52,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->args([
             service(IndexManager::class),
             service(IndexPersistenceService::class),
-            service(LoggerInterface::class),
+            service('logger'),
         ])
         ->tag('messenger.message_handler');
 };
