@@ -138,9 +138,7 @@ class DownloadController extends BaseEndpointController
             $configuration = $this->getDataHubConfiguration();
             $configReader = new ConfigReader($configuration->getConfiguration());
         } catch (\Exception $ex) {
-            Logger::err($ex->getMessage(), [
-                'requestHeaders' => $this->request->headers->all(),
-            ]);
+            Logger::err($ex->getMessage());
 
             return new JsonResponse([
                 'success' => false,
@@ -179,7 +177,6 @@ class DownloadController extends BaseEndpointController
             'configReaderType' => $configReader->getType(),
             'id' => $id,
             'element::class' => get_class($element),
-            'requestHeaders' => $this->request->headers->all()
         ]);
 
         if (AssetProvider::CIHUB_PREVIEW_THUMBNAIL === $thumbnail && 'ciHub' === $configReader->getType()) {
@@ -246,13 +243,13 @@ class DownloadController extends BaseEndpointController
         ]);
 
         if (!$storage->fileExists($storagePath)) {
-            Logger::error('CIHUB: Storage file does not exists, queue generation');
+            Logger::debug('CIHUB: Storage file does not exists, queue generation');
             \Pimcore::getContainer()->get('messenger.bus.pimcore-core')->dispatch(
                 new AssetPreviewImageMessage($element->getId())
             );
             $response = $this->getNoThumbnailResponse();
         } else {
-            Logger::error('CIHUB: Storage file does exists');
+            Logger::debug('CIHUB: Storage file does exists');
             $response = new StreamedResponse(function () use ($storagePath, $storage): void {
                 fpassthru($storage->readStream($storagePath));
             }, 200, [
