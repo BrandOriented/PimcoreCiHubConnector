@@ -12,9 +12,9 @@ declare(strict_types=1);
  * @copyright  Copyright (c) 2021 CI HUB GmbH (https://ci-hub.com)
  */
 
-namespace App\Message\CIHUB\Handler;
+namespace CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler;
 
-use App\Message\CIHUB\UpdateIndexElementMessage;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\UpdateIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexPersistenceService;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\IndexManager;
 use Elastic\Elasticsearch\Exception\ClientResponseException;

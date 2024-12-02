@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler;
 
-use App\Message\CIHUB\DeleteIndexElementMessage;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\DeleteIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexPersistenceService;
 use Elastic\Elasticsearch\Exception\ClientResponseException;
 use Elastic\Elasticsearch\Exception\MissingParameterException;

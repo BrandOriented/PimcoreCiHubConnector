@@ -13,8 +13,11 @@ declare(strict_types=1);
 
 use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexPersistenceService;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\IndexManager;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler\DeleteIndexElementMessageHandler;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler\RebuildIndexElementMessageHandler;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler\RebuildUpdateIndexElementMessageHandler;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler\UpdateIndexElementMessageHandler;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -34,6 +37,22 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->args([
             service(IndexManager::class),
             service(IndexPersistenceService::class),
+        ])
+        ->tag('messenger.message_handler');
+
+    $services->set(DeleteIndexElementMessageHandler::class)
+        ->args([
+            service(IndexManager::class),
+            service(IndexPersistenceService::class),
+            service(LoggerInterface::class),
+        ])
+        ->tag('messenger.message_handler');
+
+    $services->set(UpdateIndexElementMessageHandler::class)
+        ->args([
+            service(IndexManager::class),
+            service(IndexPersistenceService::class),
+            service(LoggerInterface::class),
         ])
         ->tag('messenger.message_handler');
 };
