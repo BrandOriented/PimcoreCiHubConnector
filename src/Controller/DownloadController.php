@@ -138,7 +138,9 @@ class DownloadController extends BaseEndpointController
             $configuration = $this->getDataHubConfiguration();
             $configReader = new ConfigReader($configuration->getConfiguration());
         } catch (\Exception $ex) {
-            Logger::err($ex->getMessage());
+            Logger::err($ex->getMessage(), [
+                'requestHeaders' => $this->request->headers->all(),
+            ]);
 
             return new JsonResponse([
                 'success' => false,
@@ -172,11 +174,12 @@ class DownloadController extends BaseEndpointController
         $thumbnail = (string) $this->request->get('thumbnail');
         $storage = Storage::get('thumbnail');
 
-        Logger::error('Requested download action', [
+        Logger::debug('CIHUB: Requested download action', [
             'thumbnail' => $thumbnail,
             'configReaderType' => $configReader->getType(),
             'id' => $id,
             'element::class' => get_class($element),
+            'requestHeaders' => $this->request->headers->all()
         ]);
 
         if (AssetProvider::CIHUB_PREVIEW_THUMBNAIL === $thumbnail && 'ciHub' === $configReader->getType()) {
@@ -195,6 +198,7 @@ class DownloadController extends BaseEndpointController
             $stream = $elementFile->getStream();
 
             if (!$stream) {
+                Logger::debug('CIHUB: No stream found, responding with no thumbnail and queuing preview generation');
                 \Pimcore::getContainer()->get('messenger.bus.pimcore-core')->dispatch(
                     new AssetPreviewImageMessage($element->getId())
                 );
@@ -206,18 +210,18 @@ class DownloadController extends BaseEndpointController
                 fpassthru($stream);
             }, 200, [
                 'Content-Type' => $mimeType,
-                'Access-Control-Allow-Origin', '*',
+                'Access-Control-Allow-Origin' => '*',
             ]);
 
             try {
                 // Add cache to headers
                 $this->addThumbnailCacheHeaders($response);
             } catch (\Exception $e) {
-                Logger::err($e->getMessage(), [
+                Logger::debug($e->getMessage(), [
                     'id' => $element->getId(),
                     'filename' => $element->getFilename(),
                     'realpath' => $element->getRealPath(),
-                    'checksum' => $element->getChecksum()
+                    'checksum' => $element->getChecksum(),
                 ]);
             }
 
