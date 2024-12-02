@@ -32,14 +32,14 @@ class CorsListener implements EventSubscriberInterface
     public function onKernelResponse(ResponseEvent $event): void
     {
         if (!$event->isMainRequest()) {
-            $this->logger->debug('Not a master type request, skipping CORS checks.');
+            $this->logger->debug('CIHUB: Not a master type request, skipping CORS checks.');
 
             return;
         }
 
         $route = $event->getRequest()->get('_route');
         if (!is_string($route) || !str_starts_with($route, 'datahub_rest_endpoints')) {
-            $this->logger->debug('Not a datahub request, skipping CORS checks.');
+            $this->logger->debug('CIHUB: Not a datahub request, skipping CORS checks.');
 
             return;
         }
@@ -88,5 +88,10 @@ class CorsListener implements EventSubscriberInterface
 
         $event->getResponse()->headers->set('X-Powered-By', 'https://brandoriented.io');
         $event->getResponse()->headers->add($crossOriginHeaders);
+
+        $this->logger->debug('CIHUB: Applied CORS', [
+            'responseHeaders' => $event->getResponse()->headers->all(),
+            'requestHeaders' => $request->headers->all(),
+        ]);
     }
 }
