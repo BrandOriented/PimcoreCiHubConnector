@@ -235,7 +235,7 @@ class DownloadController extends BaseEndpointController
             $element->getChecksum()
         );
 
-        Logger::error('Storage path is '.$storagePath, [
+        Logger::debug('CIHUB: Storage path is '.$storagePath, [
             '$elementFile::class' => get_class($elementFile),
             '$element::class' => get_class($element),
 
@@ -246,13 +246,13 @@ class DownloadController extends BaseEndpointController
         ]);
 
         if (!$storage->fileExists($storagePath)) {
-            Logger::error('Storage file does not exists, queue generation');
+            Logger::error('CIHUB: Storage file does not exists, queue generation');
             \Pimcore::getContainer()->get('messenger.bus.pimcore-core')->dispatch(
                 new AssetPreviewImageMessage($element->getId())
             );
             $response = $this->getNoThumbnailResponse();
         } else {
-            Logger::error('Storage file does exists');
+            Logger::error('CIHUB: Storage file does exists');
             $response = new StreamedResponse(function () use ($storagePath, $storage): void {
                 fpassthru($storage->readStream($storagePath));
             }, 200, [
@@ -425,7 +425,7 @@ class DownloadController extends BaseEndpointController
 
     public function getStoragePath(ThumbnailInterface $thumb, int $id, string $filename, string $realPlace, string $checksum): string
     {
-        Logger::error('Getting storage path', [
+        Logger::debug('CIHUB: Getting storage path', [
             'id' => $id,
             'filename' => $filename,
             'realPlace' => $realPlace,
