@@ -232,6 +232,12 @@ final class UploadController extends BaseEndpointController
         return new JsonResponse([], 204);
     }
 
+    #[Route('/{id}/commit', name: 'upload_commit_options', methods: ['OPTIONS'])]
+    public function commitOptions(): Response
+    {
+        return new JsonResponse([]);
+    }
+
     /**
      * @throws FilesystemException
      */
@@ -393,6 +399,12 @@ final class UploadController extends BaseEndpointController
             'entries' => $datahubUploadSession->getParts()->toArray(),
             'total' => $datahubUploadSession->getPartsCount(),
         ]);
+    }
+
+    #[Route('/{id}/part', name: 'upload_part_options', methods: ['OPTIONS'])]
+    public function partOptions(): JsonResponse
+    {
+        return new JsonResponse([]);
     }
 
     /**
