@@ -25,22 +25,15 @@ use Pimcore\Event\Model\AssetEvent;
 use Pimcore\Event\Model\DataObjectEvent;
 use Pimcore\Logger;
 use Pimcore\Model\Asset;
-use Pimcore\Model\Asset\Folder;
 use Pimcore\Model\DataObject;
-use Pimcore\Model\DataObject\AbstractObject;
-use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 final readonly class ElementEnqueueingListener implements EventSubscriberInterface
 {
-    public function __construct(
-        private CompositeConfigurationLoader $compositeConfigurationLoader,
-        private IndexManager $indexManager,
-        private IndexPersistenceService $indexPersistenceService
-    ) {
-    }
+    public const TYPE_ASSET = 'asset';
+    public const TYPE_OBJECT = 'object';
 
     public static function getSubscribedEvents(): array
     {
@@ -54,8 +47,20 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
         ];
     }
 
+    public function __construct(
+        private CompositeConfigurationLoader $compositeConfigurationLoader,
+        private IndexManager $indexManager,
+        private IndexPersistenceService $indexPersistenceService
+    ) {
+    }
+
     public function enqueueAsset(AssetEvent $assetEvent): void
     {
+        $this->logger->debug(sprintf(
+            'CIHub integration requested to enqueueAsset: %d',
+            $assetEvent->getAsset()->getId()
+        ), $assetEvent->getArguments());
+
         //do not update index when auto save or only saving version
         /**
          * @TODO - add this as a part of every update methods
@@ -64,6 +69,10 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
             ($assetEvent->hasArgument('isAutoSave') && $assetEvent->getArgument('isAutoSave')) ||
             ($assetEvent->hasArgument('saveVersionOnly') && $assetEvent->getArgument('saveVersionOnly'))
         ) {
+            $this->logger->debug(sprintf(
+                'Skipping CIHub for asset: %d',
+                $assetEvent->getAsset()->getId()
+            ), $assetEvent->getArguments());
             return;
         }
 
@@ -76,28 +85,32 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
          * @TODO - move all of it to queue
          */
         foreach ($configurations as $configuration) {
-            $name = $configuration->getName();
-            $reader = new ConfigReader($configuration->getConfiguration());
+            $endpointName = $configuration->getName();
+            $configReader = new ConfigReader($configuration->getConfiguration());
 
             // Check if assets are enabled
-            if (!$reader->isAssetIndexingEnabled()) {
+            if (!$configReader->isAssetIndexingEnabled()) {
                 continue;
             }
+
+            $indexName = $this->indexManager->getIndexName($asset, $endpointName);
+
             try {
-                $this->indexPersistenceService->update(
-                    $asset,
-                    $name,
-                    $this->indexManager->getIndexName($asset, $name)
-                );
+                $this->indexPersistenceService->update($asset, $endpointName, $indexName);
             } catch (\Exception $e) {
                 Logger::crit($e->getMessage());
             }
-            $this->enqueueParentFolders($asset->getParent(), Folder::class, $name);
+            $this->enqueueParentFolders($asset->getParent(), Asset\Folder::class, $endpointName);
         }
     }
 
     public function enqueueObject(DataObjectEvent $dataObjectEvent): void
     {
+        $this->logger->debug(sprintf(
+            'CIHub integration requested to enqueueObject: %d',
+            $dataObjectEvent->getObject()->getId()
+        ), $dataObjectEvent->getArguments());
+
         $object = $dataObjectEvent->getObject();
 
         if (!$object instanceof Concrete) {
@@ -107,21 +120,23 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
         $configurations = $this->compositeConfigurationLoader->loadConfigs();
 
         foreach ($configurations as $configuration) {
-            $name = $configuration->getName();
-            $reader = new ConfigReader($configuration->getConfiguration());
-            $objectClassNames = $reader->getObjectClassNames();
+            $endpointName = $configuration->getName();
+            $configReader = new ConfigReader($configuration->getConfiguration());
 
-            // Check if object class is configured
-            if (!\in_array($object->getClassName(), $objectClassNames, true)) {
+            // Check if objects are enabled
+            if (!$configReader->isObjectIndexingEnabled()) {
                 continue;
             }
 
+            // Check if object class is configured
+            if (!\in_array($object->getClassName(), $configReader->getObjectClassNames(), true)) {
+                continue;
+            }
+
+            $indexName = $this->indexManager->getIndexName($object, $endpointName);
+
             try {
-                $this->indexPersistenceService->update(
-                    $object,
-                    $name,
-                    $this->indexManager->getIndexName($object, $name)
-                );
+                $this->indexPersistenceService->update($object, $endpointName, $indexName);
             } catch (\Exception $e) {
                 Logger::crit($e->getMessage());
             }
@@ -133,21 +148,28 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
 
     public function removeAsset(AssetEvent $assetEvent): void
     {
+        $this->logger->debug(sprintf(
+            'CIHub integration requested to removeAsset: %d',
+            $assetEvent->getAsset()->getId()
+        ), $assetEvent->getArguments());
+
         $asset = $assetEvent->getAsset();
 
         $configurations = $this->compositeConfigurationLoader->loadConfigs();
 
         foreach ($configurations as $configuration) {
-            $name = $configuration->getName();
-            $reader = new ConfigReader($configuration->getConfiguration());
+            $endpointName = $configuration->getName();
+            $configReader = new ConfigReader($configuration->getConfiguration());
 
             // Check if assets are enabled
-            if (!$reader->isAssetIndexingEnabled()) {
+            if (!$configReader->isAssetIndexingEnabled()) {
                 continue;
             }
 
+            $indexName = $this->indexManager->getIndexName($asset, $endpointName);
+
             try {
-                $this->indexPersistenceService->delete($asset->getId(), $this->indexManager->getIndexName($asset, $name));
+                $this->indexPersistenceService->delete($asset->getId(), $indexName);
             } catch (ClientResponseException|MissingParameterException|ServerResponseException $e) {
                 Logger::crit($e->getMessage());
             }
@@ -156,26 +178,32 @@ final readonly class ElementEnqueueingListener implements EventSubscriberInterfa
 
     public function removeObject(DataObjectEvent $dataObjectEvent): void
     {
+        $this->logger->debug(sprintf(
+            'CIHub integration requested to removeObject: %d',
+            $dataObjectEvent->getObject()->getId()
+        ), $dataObjectEvent->getArguments());
+
         $object = $dataObjectEvent->getObject();
 
-        if (!$object instanceof Concrete) {
+        if (!$object instanceof DataObject\Concrete) {
             return;
         }
 
         $configurations = $this->compositeConfigurationLoader->loadConfigs();
 
         foreach ($configurations as $configuration) {
-            $name = $configuration->getName();
-            $reader = new ConfigReader($configuration->getConfiguration());
-            $objectClassNames = $reader->getObjectClassNames();
+            $endpointName = $configuration->getName();
+            $configReader = new ConfigReader($configuration->getConfiguration());
 
             // Check if object class is configured
-            if (!\in_array($object->getClassName(), $objectClassNames, true)) {
+            if (!\in_array($object->getClassName(), $configReader->getObjectClassNames(), true)) {
                 continue;
             }
 
+            $indexName = $this->indexManager->getIndexName($object, $endpointName);
+
             try {
-                $this->indexPersistenceService->delete($object->getId(), $this->indexManager->getIndexName($object, $name));
+                $this->indexPersistenceService->delete($object->getId(), $indexName);
             } catch (ClientResponseException|MissingParameterException|ServerResponseException $e) {
                 Logger::crit($e->getMessage());
             }
