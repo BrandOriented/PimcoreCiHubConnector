@@ -54,14 +54,6 @@ final class DeleteIndexElementMessageHandler implements BatchHandlerInterface
             'indexName' => $message->getIndexName(),
         ]);
 
-        if ($ack === null) {
-            $this->indexPersistenceService->delete(
-                $message->getEntityId(),
-                $message->getIndexName()
-            );
-            return;
-        }
-
         return $this->handle($message, $ack);
     }
 

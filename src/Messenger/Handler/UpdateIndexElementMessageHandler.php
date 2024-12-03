@@ -54,7 +54,6 @@ final class UpdateIndexElementMessageHandler implements BatchHandlerInterface
             'entityId' => $message->getEntityId(),
             'entityType' => $message->getEntityType(),
             'endpointName' => $message->getEndpointName(),
-            'indexName' => $message->getIndexName(),
         ]);
 
         return $this->handle($message, $ack);
