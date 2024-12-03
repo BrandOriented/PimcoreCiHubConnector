@@ -186,7 +186,7 @@ class DownloadController extends BaseEndpointController
         $elementFile = $element;
         $thumbnailConfig = null;
 
-        if ($element instanceof Image) {
+        if (!empty($thumbnail) && $element instanceof Image) {
             $thumbnailConfig = Thumbnail\Config::getByAutoDetect($thumbnail);
             $elementFile = $element->getThumbnail($thumbnailConfig);
 
@@ -222,6 +222,12 @@ class DownloadController extends BaseEndpointController
                 ]);
             }
 
+            Logger::debug('CIHUB: data found for element, streaming normal response', [
+                'id' => $element->getId(),
+                'filename' => $element->getFilename(),
+                'realpath' => $element->getRealPath(),
+                'checksum' => $element->getChecksum(),
+            ]);
             return $response;
         }
 
