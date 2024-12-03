@@ -26,7 +26,7 @@ use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
 use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 
 #[AsMessageHandler]
-final readonly class DeleteIndexElementMessageHandler implements BatchHandlerInterface
+final class DeleteIndexElementMessageHandler implements BatchHandlerInterface
 {
     use BatchHandlerTrait;
 
