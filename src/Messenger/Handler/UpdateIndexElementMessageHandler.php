@@ -39,20 +39,31 @@ final readonly class UpdateIndexElementMessageHandler
     /**
      * @throws \Exception
      */
-    public function __invoke(UpdateIndexElementMessage $updateIndexElementMessage): void
+    public function __invoke(UpdateIndexElementMessage $message)
     {
-        $element = match ($updateIndexElementMessage->getEntityType()) {
-            'asset' => Asset::getById($updateIndexElementMessage->getEntityId()),
-            'object' => AbstractObject::getById($updateIndexElementMessage->getEntityId()),
+        $this->logger->debug(sprintf(
+            'CIHub integration requested to update %s element: %d',
+            $message->getEntityType(),
+            $message->getEntityId()
+        ), [
+            'entityId' => $message->getEntityId(),
+            'entityType' => $message->getEntityType(),
+            'endpointName' => $message->getEndpointName(),
+            'indexName' => $message->getIndexName(),
+        ]);
+
+        $element = match ($message->getEntityType()) {
+            'asset' => Asset::getById($message->getEntityId()),
+            'object' => AbstractObject::getById($message->getEntityId()),
             default => null,
         };
 
-        $folderClass = match($updateIndexElementMessage->getEntityType()) {
+        $folderClass = match($message->getEntityType()) {
             'asset' => Asset\Folder::class,
             'object' => DataObject\Folder::class,
         };
 
-        $endpointName = $updateIndexElementMessage->getEndpointName();
+        $endpointName = $message->getEndpointName();
 
         if (!$element instanceof ElementInterface) {
             return;

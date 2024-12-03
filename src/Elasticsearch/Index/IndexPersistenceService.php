@@ -337,4 +337,8 @@ final readonly class IndexPersistenceService
             'body' => $body,
         ])->asArray();
     }
+
+    public function bulk(array $params = []) {
+        return $this->client->bulk($params);
+    }
 }

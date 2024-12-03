@@ -21,10 +21,15 @@ use Elastic\Elasticsearch\Exception\MissingParameterException;
 use Elastic\Elasticsearch\Exception\ServerResponseException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Handler\Acknowledger;
+use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
+use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 
 #[AsMessageHandler]
-final readonly class DeleteIndexElementMessageHandler
+final readonly class DeleteIndexElementMessageHandler implements BatchHandlerInterface
 {
+    use BatchHandlerTrait;
+
     public function __construct(
         private IndexPersistenceService $indexPersistenceService,
         private LoggerInterface $logger,
@@ -36,7 +41,7 @@ final readonly class DeleteIndexElementMessageHandler
      * @throws MissingParameterException
      * @throws ServerResponseException
      */
-    public function __invoke(DeleteIndexElementMessage $message): void
+    public function __invoke(DeleteIndexElementMessage $message, Acknowledger $ack = null)
     {
         $this->logger->debug(sprintf(
             'CIHub integration requested to remove %s element: %d',
@@ -49,27 +54,40 @@ final readonly class DeleteIndexElementMessageHandler
             'indexName' => $message->getIndexName(),
         ]);
 
-        $this->indexPersistenceService->delete(
-            $message->getEntityId(),
-            $message->getIndexName()
-        );
-//        try {
-//            $this->indexPersistenceService->delete($element->getId(), $indexName);
-//        } catch (ClientResponseException $e) {
-//            // e.g. "Not Found". Could happen when index was not built/rebuilt
-//            // for element for whatever reason. Just warn, do not interfere
-//            // other code.
-//            $this->logger->warning($e->getMessage(), [
-//                'elementId' => $element->getId(),
-//                'endpointName' => $endpointName,
-//                'indexName' => $indexName,
-//            ]);
-//        } catch (ServerResponseException $e) {
-//            $this->logger->critical($e->getMessage(), [
-//                'elementId' => $element->getId(),
-//                'endpointName' => $endpointName,
-//                'indexName' => $indexName,
-//            ]);
-//        }
+        if ($ack === null) {
+            $this->indexPersistenceService->delete(
+                $message->getEntityId(),
+                $message->getIndexName()
+            );
+            return;
+        }
+
+        return $this->handle($message, $ack);
+    }
+
+    /**
+     * @param list<array{0: DeleteIndexElementMessage, 1: Acknowledger}>
+     */
+    private function process(array $jobs): void
+    {
+        $params = [];
+        $params['refresh'] = true;
+
+        foreach ($jobs as [$message, $ack]) {
+            assert($message instanceof DeleteIndexElementMessage);
+            try {
+                $params['body'][] = [
+                    'delete' => [
+                        '_index' => $message->getIndexName(),
+                        '_id' => $message->getEntityId(),
+                    ],
+                ];
+                $ack->ack($message);
+            } catch (\Throwable $e) {
+                $ack->nack($e);
+            }
+        }
+
+        $this->indexPersistenceService->bulk($params);
     }
 }
