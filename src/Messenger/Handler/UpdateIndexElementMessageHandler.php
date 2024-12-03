@@ -30,7 +30,7 @@ use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
 use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 
 #[AsMessageHandler]
-final readonly class UpdateIndexElementMessageHandler implements BatchHandlerInterface
+final class UpdateIndexElementMessageHandler implements BatchHandlerInterface
 {
     use BatchHandlerTrait;
 
@@ -87,6 +87,8 @@ final readonly class UpdateIndexElementMessageHandler implements BatchHandlerInt
     }
 
     /**
+     * @TODO Bulk requests
+     *
      * @param list<array{0: UpdateIndexElementMessage, 1: Acknowledger}>
      */
     private function process(array $jobs): void
