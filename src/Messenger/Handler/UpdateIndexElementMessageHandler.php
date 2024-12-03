@@ -25,10 +25,15 @@ use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\Element\ElementInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\Handler\Acknowledger;
+use Symfony\Component\Messenger\Handler\BatchHandlerInterface;
+use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 
 #[AsMessageHandler]
-final readonly class UpdateIndexElementMessageHandler
+final readonly class UpdateIndexElementMessageHandler implements BatchHandlerInterface
 {
+    use BatchHandlerTrait;
+
     public function __construct(
         private IndexManager $indexManager,
         private IndexPersistenceService $indexPersistenceService,
@@ -39,7 +44,7 @@ final readonly class UpdateIndexElementMessageHandler
     /**
      * @throws \Exception
      */
-    public function __invoke(UpdateIndexElementMessage $message)
+    public function __invoke(UpdateIndexElementMessage $message, Acknowledger $ack = null)
     {
         $this->logger->debug(sprintf(
             'CIHub integration requested to update %s element: %d',
@@ -52,27 +57,7 @@ final readonly class UpdateIndexElementMessageHandler
             'indexName' => $message->getIndexName(),
         ]);
 
-        $element = match ($message->getEntityType()) {
-            'asset' => Asset::getById($message->getEntityId()),
-            'object' => AbstractObject::getById($message->getEntityId()),
-            default => null,
-        };
-
-        $folderClass = match($message->getEntityType()) {
-            'asset' => Asset\Folder::class,
-            'object' => DataObject\Folder::class,
-        };
-
-        $endpointName = $message->getEndpointName();
-
-        if (!$element instanceof ElementInterface) {
-            return;
-        }
-
-        $indexName = $this->indexManager->getIndexName($element, $endpointName);
-
-        $this->indexPersistenceService->update($element, $endpointName, $indexName);
-        $this->updateParentFolders($element->getParent(), $folderClass, $endpointName);
+        return $this->handle($message, $ack);
     }
 
     private function updateParentFolders(
@@ -98,6 +83,46 @@ final readonly class UpdateIndexElementMessageHandler
                 ]);
             }
             $element = $element->getParent();
+        }
+    }
+
+    /**
+     * @param list<array{0: UpdateIndexElementMessage, 1: Acknowledger}>
+     */
+    private function process(array $jobs): void
+    {
+        $params = [];
+
+        foreach ($jobs as [$message, $ack]) {
+            try {
+                assert($message instanceof UpdateIndexElementMessage);
+
+                $element = match ($message->getEntityType()) {
+                    'asset' => Asset::getById($message->getEntityId()),
+                    'object' => AbstractObject::getById($message->getEntityId()),
+                    default => null,
+                };
+
+                $folderClass = match($message->getEntityType()) {
+                    'asset' => Asset\Folder::class,
+                    'object' => DataObject\Folder::class,
+                };
+
+                $endpointName = $message->getEndpointName();
+
+                if (!$element instanceof ElementInterface) {
+                    return;
+                }
+
+                $indexName = $this->indexManager->getIndexName($element, $endpointName);
+
+                $this->indexPersistenceService->update($element, $endpointName, $indexName);
+                $this->updateParentFolders($element->getParent(), $folderClass, $endpointName);
+
+                $ack->ack($message);
+            } catch (\Throwable $e) {
+                $ack->nack($e);
+            }
         }
     }
 }
