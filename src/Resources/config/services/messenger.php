@@ -42,7 +42,6 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(DeleteIndexElementMessageHandler::class)
         ->args([
-            service(IndexManager::class),
             service(IndexPersistenceService::class),
             service('logger'),
         ])
