@@ -184,7 +184,7 @@ class DownloadController extends BaseEndpointController
         if (empty($thumbnailName) && ($element instanceof Asset)) {
             Logger::debug('CIHUB: Providing original file');
             $response = new BinaryFileResponse($element->getLocalFile(), Response::HTTP_OK, [
-                'Content-Type' => $elementFile->getMimetype(),
+                'Content-Type' => $element->getMimetype(),
                 'Access-Control-Allow-Origin' => '*',
             ]);
             return $response;
