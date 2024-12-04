@@ -31,6 +31,7 @@ use Pimcore\Messenger\AssetUpdateTasksMessage;
 use Pimcore\Model\Asset;
 use Pimcore\Model\Version;
 use Pimcore\Tool\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -177,6 +178,17 @@ class DownloadController extends BaseEndpointController
             'id' => $id,
             'element::class' => get_class($element),
         ]);
+
+        // Asset found, we do not want preview, provide original file which will
+        // be used by client app
+        if (empty($thumbnailName) && ($element instanceof Asset)) {
+            Logger::debug('CIHUB: Providing original file');
+            $response = new BinaryFileResponse($element->getLocalFile(), Response::HTTP_OK, [
+                'Content-Type' => $elementFile->getMimetype(),
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+            return $response;
+        }
 
         if (AssetProvider::CIHUB_PREVIEW_THUMBNAIL === $thumbnailName && 'ciHub' === $configReader->getType()) {
             $thumbnailName = $this->getParameter('pimcore_ci_hub_adapter.default_preview_thumbnail');
