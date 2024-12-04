@@ -133,7 +133,6 @@ final readonly class UploadHelper
                 $asset = Asset::getByPath($parentAsset->getRealFullPath().'/'.$uploadSession->getFileName());
                 $asset->setStream($filesystemOperator->readStream($uploadSession->getTemporaryPath()));
                 $asset->setUserModification($this->user->getId());
-                $asset->updateModificationInfos();
                 $asset->save();
             } elseif (Asset\Service::pathExists($parentAsset->getRealFullPath().'/'.$uploadSession->getFileName())) {
                 $filename = $this->getSafeFilename($parentAsset->getRealFullPath(), $uploadSession->getFileName());
