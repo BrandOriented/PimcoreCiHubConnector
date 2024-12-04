@@ -318,15 +318,23 @@ final readonly class IndexPersistenceService
         $configReader = new ConfigReader($configuration->getConfiguration());
 
         if ($element instanceof AbstractObject) {
-            if(in_array($element, $configReader->getObjectClassNames()) ||
-            in_array((new \ReflectionClass($this))->getShortName(), $configReader->getObjectClassNames())) {
-                $body = $this->dataObjectProvider->getIndexData($element, $configReader);
-            } else {
+            if (!$configReader->isObjectIndexingEnabled()) {
                 return [];
             }
-        } elseif ($element instanceof Asset) {
+
+            if (!\in_array($element->getClassName(), $configReader->getObjectClassNames(), true)) {
+                return [];
+            }
+
+            $body = $this->dataObjectProvider->getIndexData($element, $configReader);
+        }
+        elseif ($element instanceof Asset) {
+            if (!$configReader->isAssetIndexingEnabled()) {
+                return [];
+            }
             $body = $this->assetProvider->getIndexData($element, $configReader);
-        } else {
+        }
+        else {
             throw new \InvalidArgumentException('This element type is currently not supported.');
         }
 
