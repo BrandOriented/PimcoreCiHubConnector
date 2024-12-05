@@ -37,7 +37,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 RebuildUpdateIndexElementMessage::class => 'datahub_es_index_queue',
                 UpdateIndexElementMessage::class => 'datahub_es_index_queue',
                 DeleteIndexElementMessage::class => 'datahub_es_index_queue',
-                AssetPreviewImageMessage::class => 'datahub_es_index_queue',
+                AssetPreviewImageMessage::class => 'pimcore_core',
             ],
         ],
     ]);

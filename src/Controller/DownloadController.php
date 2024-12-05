@@ -285,7 +285,7 @@ class DownloadController extends BaseEndpointController
             }
 
             $mimeType = $thumbnailFile->getMimeType();
-            $response = new StreamedResponse(function () use ($stream, $mimeType): void {
+            $response = new StreamedResponse(function () use ($stream): void {
                 fpassthru($stream);
             }, Response::HTTP_OK, [
                 'Content-Type' => $mimeType,
