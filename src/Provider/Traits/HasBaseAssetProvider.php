@@ -90,27 +90,27 @@ trait HasBaseAssetProvider
             $checksum = null;
         }
 
+        if ($configReader->isOriginalImageAllowed()) {
+            $data['original'] = [
+                'checksum' => $checksum,
+                'filename' => $object->getFilename(),
+            ];
+            if ($asset instanceof Version) {
+                $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
+                    'config' => $configReader->getName(),
+                    'id' => $asset->getId(),
+                    'type' => 'version',
+                ], UrlGeneratorInterface::ABSOLUTE_PATH);
+            } else {
+                $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
+                    'config' => $configReader->getName(),
+                    'id' => $id,
+                ], UrlGeneratorInterface::ABSOLUTE_PATH);
+            }
+        }
+
         if ($object instanceof Image) {
             $thumbnails = $configReader->getAssetThumbnails();
-
-            if ($configReader->isOriginalImageAllowed()) {
-                $data['original'] = [
-                    'checksum' => $checksum,
-                    'filename' => $object->getFilename(),
-                ];
-                if ($asset instanceof Version) {
-                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                        'config' => $configReader->getName(),
-                        'id' => $asset->getId(),
-                        'type' => 'version',
-                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
-                } else {
-                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                        'config' => $configReader->getName(),
-                        'id' => $id,
-                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
-                }
-            }
 
             foreach ($thumbnails as $thumbnailName) {
                 $thumbnail = $object->getThumbnail($thumbnailName);
@@ -176,26 +176,6 @@ trait HasBaseAssetProvider
                 }
             }
         } else {
-            if ($configReader->isOriginalImageAllowed()) {
-                $data['original'] = [
-                    'checksum' => $checksum,
-                    'filename' => $object->getFilename(),
-                ];
-
-                if ($asset instanceof Version) {
-                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                        'config' => $configReader->getName(),
-                        'id' => $asset->getId(),
-                        'type' => 'version',
-                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
-                } else {
-                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                        'config' => $configReader->getName(),
-                        'id' => $id,
-                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
-                }
-            }
-
             // Add the preview thumbnail for CI HUB
             if ($object instanceof Document && 'ciHub' === $configReader->getType()) {
                 if (Config::getByName(self::CIHUB_PREVIEW_THUMBNAIL) instanceof Config) {
