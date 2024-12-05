@@ -21,7 +21,7 @@ use Elastic\Elasticsearch\Exception\MissingParameterException;
 use Elastic\Elasticsearch\Exception\ServerResponseException;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Model\Asset;
-use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ElementInterface;
 
 final readonly class IndexPersistenceService
@@ -317,7 +317,13 @@ final readonly class IndexPersistenceService
 
         $configReader = new ConfigReader($configuration->getConfiguration());
 
-        if ($element instanceof AbstractObject) {
+        if ($element instanceof DataObject\AbstractObject) {
+            // slightly redundant to previous conditional...
+            // ensure that element will have ::getClassName
+            if (!$element instanceof DataObject\Concrete) {
+                return [];
+            }
+
             if (!$configReader->isObjectIndexingEnabled()) {
                 return [];
             }
