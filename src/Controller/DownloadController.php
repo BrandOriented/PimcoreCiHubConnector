@@ -207,11 +207,6 @@ class DownloadController extends BaseEndpointController
             $thumbnailName = $this->getParameter('pimcore_ci_hub_adapter.default_preview_thumbnail');
         }
 
-        // Pimcore's AssetPreviewImageHandler never uses config if is is generated in queue
-        // see: Pimcore\Messenger\Handler\AssetPreviewImageHandler
-        //
-        // There is no purpose for now to change config by name
-        // We will need to prepare our custom message & message handler
         $thumbnailConfig = match(true) {
             $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
             $element instanceof Asset\Video => Asset\Video\Thumbnail\Config::getByAutoDetect($thumbnailName),
@@ -277,8 +272,6 @@ class DownloadController extends BaseEndpointController
             try {
                 $stream = $thumbnailFile->getStream();
             }
-            // This exception will happen if you will try to use custom preview
-            // configs. See comment about $thumbnailConfig
             catch (UnableToReadFile $e) {
                 Logger::err($e->getMessage(), [
                     'id' => $element->getId(),

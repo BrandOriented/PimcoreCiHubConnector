@@ -25,6 +25,9 @@ use Symfony\Component\Messenger\Handler\BatchHandlerTrait;
 /**
  * Similar to the Pimcore one, but allows to queue previews generation for
  * thumbnails different than configured globally in system.
+ *
+ * Pimcore's AssetPreviewImageHandler never uses config if is is generated in queue
+ * see: Pimcore\Messenger\Handler\AssetPreviewImageHandler
  */
 #[AsMessageHandler]
 class AssetPreviewImageMessageHandler implements BatchHandlerInterface
