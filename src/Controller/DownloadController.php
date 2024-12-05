@@ -208,15 +208,17 @@ class DownloadController extends BaseEndpointController
         }
 
         $thumbnailConfig = match(true) {
-            $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
-            $element instanceof Asset\Video => Asset\Video\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            $element instanceof Asset\Image     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            $element instanceof Asset\Document  => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
             default => null,
         };
 
         if ($thumbnailConfig === null) {
             $thumbnailConfig = match(true) {
                 $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getPreviewConfig(),
-                $element instanceof Asset\Video => Asset\Video\Thumbnail\Config::getPreviewConfig(),
+                $element instanceof Asset\Video => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                $element instanceof Asset\Document => Asset\Image\Thumbnail\Config::getPreviewConfig(),
                 default => null,
             };
         }
