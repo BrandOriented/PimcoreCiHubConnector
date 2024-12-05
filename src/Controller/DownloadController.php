@@ -32,6 +32,7 @@ use Pimcore\Model\Asset;
 use Pimcore\Model\Version;
 use Pimcore\Tool\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -187,18 +188,15 @@ class DownloadController extends BaseEndpointController
         if (empty($thumbnailName) && ($element instanceof Asset) && $configReader->isOriginalImageAllowed()) {
             Logger::debug('CIHUB: Providing original file');
 
+            $filename = basename(rawurldecode((string) $element->getPath()));
             $stream = $element->getStream();
             $response = new StreamedResponse(function () use ($stream): void {
                 fpassthru($stream);
             }, Response::HTTP_OK, [
                 'Content-Type' => $element->getMimetype(),
-                'Access-Control-Allow-Origin' => '*',
+                'Content-Length' => $element->getFileSize(),
+                'Disposition' => HeaderUtils::makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename)
             ]);
-
-            $filename = basename(rawurldecode((string) $element->getPath()));
-            $filenameFallback = preg_replace("/[^\w\-\.]/", '', $filename);
-            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename, $filenameFallback);
-            $response->headers->set('Content-Length', $element->getFileSize());
 
             return $response;
         }
