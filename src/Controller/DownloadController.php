@@ -133,11 +133,12 @@ class DownloadController extends BaseEndpointController
         if ($this->request->isMethod('OPTIONS')) {
             return new Response('', 204);
         }
+
+        $configuration = null;
         try {
             // Check if request is authenticated properly
             $this->authManager->checkAuthentication();
             $configuration = $this->getDataHubConfiguration();
-            $configReader = new ConfigReader($configuration->getConfiguration());
         } catch (\Exception $ex) {
             Logger::err($ex->getMessage());
 
@@ -146,6 +147,8 @@ class DownloadController extends BaseEndpointController
                 'message' => $ex->getMessage(),
             ]);
         }
+
+        $configReader = new ConfigReader($configuration->getConfiguration());
 
         $id = $this->request->query->getInt('id');
 
@@ -181,7 +184,7 @@ class DownloadController extends BaseEndpointController
 
         // Asset found, we do not want preview, provide original file which will
         // be used by client app
-        if (empty($thumbnailName) && ($element instanceof Asset)) {
+        if (empty($thumbnailName) && ($element instanceof Asset) && $configReader->isOriginalImageAllowed()) {
             Logger::debug('CIHUB: Providing original file');
             $response = new BinaryFileResponse($element->getLocalFile(), Response::HTTP_OK, [
                 'Content-Type' => $element->getMimetype(),
