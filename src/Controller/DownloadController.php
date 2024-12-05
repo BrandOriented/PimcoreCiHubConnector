@@ -189,13 +189,14 @@ class DownloadController extends BaseEndpointController
             Logger::debug('CIHUB: Providing original file');
 
             $filename = basename(rawurldecode((string) $element->getPath()));
+            $filenameFallback = preg_replace("/[^\w\-\.]/", '', $filename);
             $stream = $element->getStream();
             $response = new StreamedResponse(function () use ($stream): void {
                 fpassthru($stream);
             }, Response::HTTP_OK, [
                 'Content-Type' => $element->getMimetype(),
                 'Content-Length' => $element->getFileSize(),
-                'Disposition' => HeaderUtils::makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename)
+                'Disposition' => HeaderUtils::makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename, $filenameFallback),
             ]);
 
             return $response;

@@ -25,6 +25,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Webmozart\Assert\Assert;
 
+/**
+ * @TODO This trait should be refactored, especially ::getBinaryDataValues() method
+ */
 trait HasBaseAssetProvider
 {
     use LockedTrait;
@@ -173,24 +176,24 @@ trait HasBaseAssetProvider
                 }
             }
         } else {
-            $data['original'] = [
-                'checksum' => $checksum,
-                'filename' => $object->getFilename(),
-            ];
+            if ($configReader->isOriginalImageAllowed()) {
+                $data['original'] = [
+                    'checksum' => $checksum,
+                    'filename' => $object->getFilename(),
+                ];
 
-            if ($asset instanceof Version) {
-                $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                    'config' => $configReader->getName(),
-                    'id' => $asset->getId(),
-                    'type' => 'version',
-                    'thumbnail' => self::CIHUB_PREVIEW_THUMBNAIL,
-                ], UrlGeneratorInterface::ABSOLUTE_PATH);
-            } else {
-                $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
-                    'config' => $configReader->getName(),
-                    'id' => $id,
-                    'thumbnail' => self::CIHUB_PREVIEW_THUMBNAIL,
-                ], UrlGeneratorInterface::ABSOLUTE_PATH);
+                if ($asset instanceof Version) {
+                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
+                        'config' => $configReader->getName(),
+                        'id' => $asset->getId(),
+                        'type' => 'version',
+                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
+                } else {
+                    $data['original']['path'] = $this->router->generate('datahub_rest_endpoints_asset_download', [
+                        'config' => $configReader->getName(),
+                        'id' => $id,
+                    ], UrlGeneratorInterface::ABSOLUTE_PATH);
+                }
             }
 
             // Add the preview thumbnail for CI HUB
