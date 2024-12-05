@@ -14,6 +14,7 @@ namespace CIHub\Bundle\SimpleRESTAdapterBundle\Controller;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexQueryService;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Exception\InvalidParameterException;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\IndexManager;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\AssetPreviewImageMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Provider\AssetProvider;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Reader\ConfigReader;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Services\ThumbnailService;
@@ -26,7 +27,6 @@ use Nelmio\ApiDocBundle\Annotation\Security;
 use ONGR\ElasticsearchDSL\Query\FullText\MatchQuery;
 use OpenApi\Attributes as OA;
 use Pimcore\Logger;
-use Pimcore\Messenger\AssetPreviewImageMessage;
 use Pimcore\Messenger\AssetUpdateTasksMessage;
 use Pimcore\Model\Asset;
 use Pimcore\Model\Version;
@@ -101,7 +101,7 @@ class DownloadController extends BaseEndpointController
                 name: 'thumbnail',
                 description: 'Thumbnail config name',
                 in: 'query',
-                required: true,
+                required: false,
                 schema: new OA\Schema(
                     type: 'string'
                 ),
@@ -186,10 +186,20 @@ class DownloadController extends BaseEndpointController
         // be used by client app
         if (empty($thumbnailName) && ($element instanceof Asset) && $configReader->isOriginalImageAllowed()) {
             Logger::debug('CIHUB: Providing original file');
-            $response = new BinaryFileResponse($element->getLocalFile(), Response::HTTP_OK, [
+
+            $stream = $element->getStream();
+            $response = new StreamedResponse(function () use ($stream): void {
+                fpassthru($stream);
+            }, Response::HTTP_OK, [
                 'Content-Type' => $element->getMimetype(),
                 'Access-Control-Allow-Origin' => '*',
             ]);
+
+            $filename = basename(rawurldecode((string) $element->getPath()));
+            $filenameFallback = preg_replace("/[^\w\-\.]/", '', $filename);
+            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename, $filenameFallback);
+            $response->headers->set('Content-Length', $element->getFileSize());
+
             return $response;
         }
 
@@ -203,8 +213,8 @@ class DownloadController extends BaseEndpointController
         // There is no purpose for now to change config by name
         // We will need to prepare our custom message & message handler
         $thumbnailConfig = match(true) {
-//            $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getByName($thumbnailName),
-//            $element instanceof Asset\Video => Asset\Video\Thumbnail\Config::getByName($thumbnailName),
+            $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            $element instanceof Asset\Video => Asset\Video\Thumbnail\Config::getByAutoDetect($thumbnailName),
             default => null,
         };
 
@@ -256,7 +266,10 @@ class DownloadController extends BaseEndpointController
             if (!$thumbnailFile->exists()) {
                 Logger::debug('CIHUB: No stream found, responding with no thumbnail and queuing preview generation');
                 $bus = \Pimcore::getContainer()->get('messenger.bus.pimcore-core');
-                $bus->dispatch(new AssetPreviewImageMessage($element->getId()));
+                $bus->dispatch(new AssetPreviewImageMessage(
+                    $element->getId(),
+                    $thumbnailName,
+                ));
                 return $noThumbnailResponse;
             }
 
@@ -316,7 +329,10 @@ class DownloadController extends BaseEndpointController
         if (!$storage->fileExists($storagePath)) {
             Logger::debug('CIHUB: Storage file does not exists, queue generation');
             $bus = \Pimcore::getContainer()->get('messenger.bus.pimcore-core');
-            $bus->dispatch(new AssetPreviewImageMessage($element->getId()));
+            $bus->dispatch(new AssetPreviewImageMessage(
+                $element->getId(),
+                $thumbnailName,
+            ));
             return $noThumbnailResponse;
         }
 

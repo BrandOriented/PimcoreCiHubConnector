@@ -11,6 +11,7 @@
  */
 declare(strict_types=1);
 
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\AssetPreviewImageMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\DeleteIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\RebuildIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\RebuildUpdateIndexElementMessage;
@@ -36,6 +37,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 RebuildUpdateIndexElementMessage::class => 'datahub_es_index_queue',
                 UpdateIndexElementMessage::class => 'datahub_es_index_queue',
                 DeleteIndexElementMessage::class => 'datahub_es_index_queue',
+                AssetPreviewImageMessage::class => 'datahub_es_index_queue',
             ],
         ],
     ]);
