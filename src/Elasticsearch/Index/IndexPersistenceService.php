@@ -317,7 +317,13 @@ final readonly class IndexPersistenceService
 
         $configReader = new ConfigReader($configuration->getConfiguration());
 
-        if ($element instanceof DataObject\Concrete) {
+        if ($element instanceof DataObject\AbstractObject) {
+            // slightly redundant to previous conditional...
+            // ensure that element will have ::getClassName
+            if (!$element instanceof DataObject\Concrete) {
+                return [];
+            }
+
             if (!$configReader->isObjectIndexingEnabled()) {
                 return [];
             }
