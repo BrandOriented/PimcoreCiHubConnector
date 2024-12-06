@@ -39,7 +39,9 @@ trait HasDataObjectProvider
         ];
 
         if ($element instanceof Concrete) {
-            $data['data'] = $this->getDataValues($element, $configReader);
+            if (\in_array($element->getClassName(), $configReader->getObjectClassNames(), true)) {
+                $data['data'] = $this->getDataValues($element, $configReader);
+            }
         }
 
         return $data;
