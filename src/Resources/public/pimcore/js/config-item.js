@@ -158,7 +158,7 @@ pimcore.plugin.simpleRestAdapterBundle.configuration.configItem = Class.create(p
                     name: 'active',
                     value: this.data.general && this.data.general.hasOwnProperty('active')
                         ? this.data.general.active
-                        : true,
+                        : false,
                 },
                 {
                     xtype: 'textfield',
