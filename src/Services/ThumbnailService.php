@@ -11,6 +11,10 @@
 
 namespace CIHub\Bundle\SimpleRESTAdapterBundle\Services;
 
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\AssetPreviewImageMessage;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\SharedLockInterface;
+
 class ThumbnailService
 {
     public static function getAllowedFormat(string $format, array $allowed = [], string $fallback = 'png'): string
@@ -25,5 +29,37 @@ class ThumbnailService
         }
 
         return \in_array($format, $allowed, true) ? $format : $fallback;
+    }
+
+    private static function getLock(AssetPreviewImageMessage $message): SharedLockInterface {
+        /** @var LockFactory $lockFactory */
+        $lockFactory = \Pimcore::getContainer()->get(LockFactory::class);
+
+        return $lockFactory->createLock(
+            sprintf('ciHub-preview-%d', $message->getId()),
+            null,
+            false,// no auto-release
+        );
+    }
+
+    public static function isMessageQueued(AssetPreviewImageMessage $message): bool
+    {
+        $lock = self::getLock($message);
+        $alreadyInQueue = $lock->isAcquired();
+
+        if ($lock->isExpired()) {
+            $lock->release();
+        }
+        return $alreadyInQueue;
+    }
+
+    public static function lockMessage(AssetPreviewImageMessage $message): bool
+    {
+        return self::getLock($message)->acquire(false);
+    }
+
+    public static function releaseMessage(AssetPreviewImageMessage $message): void
+    {
+        self::getLock($message)->release();
     }
 }

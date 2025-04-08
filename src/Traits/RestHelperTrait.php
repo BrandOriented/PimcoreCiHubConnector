@@ -30,6 +30,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 trait RestHelperTrait
 {
+    /**
+     * @throws NotFoundException
+     */
     public function getVersion(): array
     {
         $id = $this->request->query->getInt('id');
@@ -49,6 +52,10 @@ trait RestHelperTrait
         return [$element, $version];
     }
 
+    /**
+     * @throws InvalidParameterException
+     * @throws NotFoundException
+     */
     private function getElementByIdType(): ElementInterface|Version
     {
         $id = $this->request->query->getInt('id');
@@ -71,6 +78,9 @@ trait RestHelperTrait
         return $element;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     public function getParent(): Asset|DataObject
     {
         if ($this->request->request->has('type')) {
@@ -86,6 +96,9 @@ trait RestHelperTrait
         };
     }
 
+    /**
+     * @throws NotFoundException
+     */
     public function getAssetParent(): Asset
     {
         if ($this->request->query->has('parentId')) {
@@ -104,7 +117,8 @@ trait RestHelperTrait
     }
 
     /**
-     * @throws \Exception
+     * @throws FolderLockedException
+     * @throws AccessDeniedHttpException
      */
     public function deleteAssetFolder(Folder $folder): bool
     {
@@ -121,6 +135,9 @@ trait RestHelperTrait
         throw new AccessDeniedHttpException('Your request to delete a folder has been blocked due to missing permissions');
     }
 
+    /**
+     * @throws AssetExistsException
+     */
     public function getElementNameFromRequest(): string
     {
         if ($this->request->query->has('name')) {
@@ -134,6 +151,10 @@ trait RestHelperTrait
         return $name;
     }
 
+    /**
+     * @throws AccessDeniedHttpException
+     * @throws AssetExistsException
+     */
     public function createAssetFolder(Asset $asset): Asset
     {
         $name = $this->getElementNameFromRequest();
@@ -160,6 +181,9 @@ trait RestHelperTrait
         throw new AccessDeniedHttpException('Your request to create a folder has been blocked due to missing permissions');
     }
 
+    /**
+     * @throws NotFoundException
+     */
     public function getObjectParent(): DataObject
     {
         if ($this->request->query->has('parentId')) {
@@ -176,7 +200,8 @@ trait RestHelperTrait
     }
 
     /**
-     * @throws ValidationException
+     * @throws AssetExistsException
+     * @throws AccessDeniedHttpException
      */
     public function createObjectFolder(DataObject $dataObject): DataObject
     {
@@ -209,7 +234,8 @@ trait RestHelperTrait
     }
 
     /**
-     * @throws \Exception
+     * @throws AccessDeniedHttpException
+     * @throws FolderLockedException
      */
     public function deleteObjectFolder(DataObject\Folder $folder): bool
     {
@@ -226,6 +252,9 @@ trait RestHelperTrait
         throw new AccessDeniedHttpException('Your request to delete a folder has been blocked due to missing permissions');
     }
 
+    /**
+     * @throws InvalidParameterException
+     */
     protected function checkRequiredParameters(array $params): void
     {
         $required = [];
@@ -244,7 +273,7 @@ trait RestHelperTrait
     }
 
     /**
-     * @throws \Exception
+     * @throws \InvalidParameterException
      */
     public function getChild(ElementInterface $element, ConfigReader $configReader): array
     {
@@ -270,5 +299,8 @@ trait RestHelperTrait
         $response->setPublic();
         $response->setExpires($dateTime);
         $response->headers->set('Pragma', '');
+        $response->setCache([
+            'must_revalidate'  => true,
+        ]);
     }
 }

@@ -153,6 +153,8 @@ final readonly class IndexPersistenceService
      *
      * @return array<string, mixed>
      *
+     * @link https://www.elastic.co/guide/en/elasticsearch/reference/current/index-management-settings.html#action-destructive-requires-name action.destructive_requires_name
+     *
      * @throws ClientResponseException
      * @throws MissingParameterException
      * @throws ServerResponseException

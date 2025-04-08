@@ -47,7 +47,7 @@ final class UpdateIndexElementMessageHandler implements BatchHandlerInterface
     public function __invoke(UpdateIndexElementMessage $message, Acknowledger $ack = null)
     {
         $this->logger->debug(sprintf(
-            'CIHub integration requested to update %s element: %d',
+            'CIHUB: Integration requested to update %s element: %d',
             $message->getEntityType(),
             $message->getEntityId()
         ), [
@@ -125,5 +125,11 @@ final class UpdateIndexElementMessageHandler implements BatchHandlerInterface
                 $ack->nack($e);
             }
         }
+    }
+
+    // @phpstan-ignore-next-line
+    private function shouldFlush(): bool
+    {
+        return 1 <= \count($this->jobs);
     }
 }

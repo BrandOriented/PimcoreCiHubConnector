@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\Handler;
 
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\AssetPreviewImageMessage;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Services\ThumbnailService;
 use Pimcore\Model\Asset;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -53,6 +54,7 @@ class AssetPreviewImageMessageHandler implements BatchHandlerInterface
     {
         foreach ($jobs as [$message, $ack]) {
             assert($message instanceof AssetPreviewImageMessage);
+            assert($ack instanceof Acknowledger);
 
             $id = $message->getId();
             $thumbnailName = $message->getThumbnailName();
@@ -65,11 +67,21 @@ class AssetPreviewImageMessageHandler implements BatchHandlerInterface
                 $asset = Asset::getById($id);
 
                 $thumbnailConfig = match(true) {
-                    $asset instanceof Asset\Image    => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
-                    $asset instanceof Asset\Document => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
-                    $asset instanceof Asset\Video    => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+                    $asset instanceof Asset\Image       => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+                    $asset instanceof Asset\Document    => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+                    //$element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+                    $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
                     default => null,
                 };
+
+                if ($thumbnailConfig === null) {
+                    $thumbnailConfig = match(true) {
+                        $element instanceof Asset\Image     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                        $element instanceof Asset\Document  => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                        $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                        default => null,
+                    };
+                }
 
                 if ($thumbnailConfig instanceof Asset\Image\Thumbnail\Config) {
                     $thumbnail = match(true) {
@@ -81,6 +93,7 @@ class AssetPreviewImageMessageHandler implements BatchHandlerInterface
 
                     if ($thumbnail instanceof Asset\Thumbnail\ThumbnailInterface) {
                         $thumbnail->generate(false);
+                        ThumbnailService::releaseMessage($message);
                     }
                 }
 
@@ -90,5 +103,11 @@ class AssetPreviewImageMessageHandler implements BatchHandlerInterface
                 $ack->nack($e);
             }
         }
+    }
+
+    // @phpstan-ignore-next-line
+    private function shouldFlush(): bool
+    {
+        return 1 <= \count($this->jobs);
     }
 }

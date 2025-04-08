@@ -13,12 +13,19 @@ namespace CIHub\Bundle\SimpleRESTAdapterBundle\Controller;
 
 use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexQueryService;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Exception\InvalidParameterException;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Exception\NotFoundException;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Extractor\LabelExtractorInterface;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\AuthManager;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Manager\IndexManager;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\AssetPreviewImageMessage;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Messenger\DeleteIndexElementMessage;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Provider\AssetProvider;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Provider\DataObjectProvider;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Reader\ConfigReader;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Repository\DataHubConfigurationRepository;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Services\ThumbnailService;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Traits\RestHelperTrait;
+use CIHub\Bundle\SimpleRESTAdapterBundle\Transformer\FilterFieldNameTransformerInterface;
 use Elastic\Elasticsearch\Exception\ClientResponseException;
 use Elastic\Elasticsearch\Exception\ServerResponseException;
 use League\Flysystem\FilesystemException;
@@ -27,17 +34,21 @@ use Nelmio\ApiDocBundle\Annotation\Security;
 use ONGR\ElasticsearchDSL\Query\FullText\MatchQuery;
 use OpenApi\Attributes as OA;
 use Pimcore\Logger;
+use Pimcore\Messenger\AssetPreviewImageMessage as PimcoreAssetPreviewMessage;
 use Pimcore\Messenger\AssetUpdateTasksMessage;
 use Pimcore\Model\Asset;
+use Pimcore\Model\Asset\Image\Thumbnail\Config;
 use Pimcore\Model\Version;
 use Pimcore\Tool\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -47,6 +58,28 @@ use Symfony\Component\Routing\RouterInterface;
 class DownloadController extends BaseEndpointController
 {
     use RestHelperTrait;
+
+    public function __construct(
+        DataHubConfigurationRepository $dataHubConfigurationRepository,
+        LabelExtractorInterface $labelExtractor,
+        RequestStack $requestStack,
+        AuthManager $authManager,
+        AssetProvider $assetProvider,
+        DataObjectProvider $dataObjectProvider,
+        FilterFieldNameTransformerInterface $filterFieldNameTransformer,
+        private IndexManager $indexManager,
+        private MessageBusInterface $messageBus,
+    ) {
+        parent::__construct(
+            $dataHubConfigurationRepository,
+            $labelExtractor,
+            $requestStack,
+            $authManager,
+            $assetProvider,
+            $dataObjectProvider,
+            $filterFieldNameTransformer
+        );
+    }
 
     /**
      * @throws FilesystemException
@@ -152,6 +185,7 @@ class DownloadController extends BaseEndpointController
         $configReader = new ConfigReader($configuration->getConfiguration());
 
         $id = $this->request->query->getInt('id');
+        $type = $this->request->query->getString('type', 'asset');
 
         try {
             // Check if required parameters are missing
@@ -163,7 +197,30 @@ class DownloadController extends BaseEndpointController
             ]);
         }
 
-        $element = $this->getElementByIdType();
+        $element = null;
+        try {
+            $element = $this->getElementByIdType();
+        }
+        catch(NotFoundException $e) {
+            // Element requested, yet it was not found, try to auto-fix
+            // It must have been deleted. There must have been problem with indexing removal.
+            //
+            // Queue removing element from index, to avoid false-positive result
+            // of finding non-existent element again after handling message
+            //
+            // `Partial Deletions`
+            // @see https://rockset.com/articles/elasticsearch-delete-index/
+            //
+            $endpointName = $configuration->getName();
+            $indexName = $this->indexManager->getIndexName($type, $endpointName);
+
+            $this->messageBus->dispatch(
+                new DeleteIndexElementMessage($id, $type, $endpointName, $indexName)
+            );
+
+            throw $e;
+        }
+
         if ($element instanceof Version) {
             $element = $element->getData();
         }
@@ -203,36 +260,40 @@ class DownloadController extends BaseEndpointController
         }
 
         if (AssetProvider::CIHUB_PREVIEW_THUMBNAIL === $thumbnailName && 'ciHub' === $configReader->getType()) {
-            $thumbnailName = $this->getParameter('pimcore_ci_hub_adapter.default_preview_thumbnail');
+            //$thumbnailName = $this->getParameter('pimcore_ci_hub_adapter.default_preview_thumbnail');
+            // Asset\Image\Thumbnail\Config::PREVIEW_THUMBNAIL_NAME
+            $thumbnailName = 'pimcore-system-treepreview';
         }
 
         $thumbnailConfig = match(true) {
             $element instanceof Asset\Image     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
-            $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
             $element instanceof Asset\Document  => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            //$element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getByAutoDetect($thumbnailName),
+            $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
             default => null,
         };
 
         if ($thumbnailConfig === null) {
             $thumbnailConfig = match(true) {
-                $element instanceof Asset\Image => Asset\Image\Thumbnail\Config::getPreviewConfig(),
-                $element instanceof Asset\Video => Asset\Image\Thumbnail\Config::getPreviewConfig(),
-                $element instanceof Asset\Document => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                $element instanceof Asset\Image     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                $element instanceof Asset\Document  => Asset\Image\Thumbnail\Config::getPreviewConfig(),
+                $element instanceof Asset\Video     => Asset\Image\Thumbnail\Config::getPreviewConfig(),
                 default => null,
             };
         }
 
         $noThumbnailResponse = $this->getNoThumbnailResponse();
 
+        /** @var Asset\Document\ImageThumbnailInterface|Asset\Image\ThumanailInterface|Asset\Video\ImageThumbnailInterface|false|null $thumbnailFile */
         $thumbnailFile = null;
         try {
             $thumbnailFile = match(true) {
-                $element instanceof Asset\Document => $element->getImageThumbnail($thumbnailName),
-                $element instanceof Asset\Image => $element->getThumbnail($thumbnailConfig),
-                $element instanceof Asset\Video => $element->getImageThumbnail($thumbnailName),
-                $element instanceof Asset\Archive => false,
-                $element instanceof Asset\Audio => false,
-                $element instanceof Asset\Unknown => false,
+                $element instanceof Asset\Document  => $element->getImageThumbnail($thumbnailConfig),
+                $element instanceof Asset\Image     => $element->getThumbnail($thumbnailConfig),
+                $element instanceof Asset\Video     => $element->getImageThumbnail($thumbnailConfig),
+                $element instanceof Asset\Archive   => false,
+                $element instanceof Asset\Audio     => false,
+                $element instanceof Asset\Unknown   => false,
                 default => null,
             };
         }
@@ -252,102 +313,83 @@ class DownloadController extends BaseEndpointController
                 get_class($element)
             ), [
                 'id' => $element->getId(),
+                'filename' => $element->getFilename(),
+                'realpath' => $element->getRealPath(),
+                'checksum' => $element->getChecksum(),
             ]);
 
             $this->addThumbnailCacheHeaders($noThumbnailResponse);
             return $noThumbnailResponse;
         }
 
-        if ($thumbnailFile instanceof Asset\Thumbnail\ThumbnailInterface) {
-            if (!$thumbnailFile->exists()) {
-                Logger::debug('CIHUB: No stream found, responding with no thumbnail and queuing preview generation');
-                $bus = \Pimcore::getContainer()->get('messenger.bus.pimcore-core');
-                $bus->dispatch(new AssetPreviewImageMessage(
-                    $element->getId(),
-                    $thumbnailName,
-                ));
-                return $noThumbnailResponse;
-            }
-
-            $stream = null;
-            try {
-                $stream = $thumbnailFile->getStream();
-            }
-            catch (UnableToReadFile $e) {
-                Logger::err($e->getMessage(), [
-                    'id' => $element->getId(),
-                    'filename' => $element->getFilename(),
-                    'realpath' => $element->getRealPath(),
-                    'checksum' => $element->getChecksum(),
-                ]);
-                return $noThumbnailResponse;
-            }
-
-            $mimeType = $thumbnailFile->getMimeType();
-            $response = new StreamedResponse(function () use ($stream): void {
-                fpassthru($stream);
-            }, Response::HTTP_OK, [
-                'Content-Type' => $mimeType,
-                'Access-Control-Allow-Origin' => '*',
-            ]);
-
-            Logger::debug('CIHUB: data found for element, streaming normal response', [
+        if ($thumbnailFile === null) {
+            Logger::warning('CIHUB: No thumbnail file to deduce preview', [
                 'id' => $element->getId(),
                 'filename' => $element->getFilename(),
                 'realpath' => $element->getRealPath(),
                 'checksum' => $element->getChecksum(),
             ]);
-
-            $this->addThumbnailCacheHeaders($response);
-            return $response;
-        }
-
-        $storagePath = $this->getStoragePath($thumbnailFile,
-            $element->getId(),
-            $element->getFilename(),
-            $element->getRealPath(),
-            $element->getChecksum()
-        );
-
-        Logger::debug('CIHUB: Storage path is '.$storagePath, [
-            '$thumbnailFile::class' => get_class($thumbnailFile),
-            '$element::class' => get_class($element),
-
-            'id'       => $element->getId(),
-            'filename' => $element->getFilename(),
-            'realpath' => $element->getRealPath(),
-            'checksum' => $element->getChecksum()
-        ]);
-
-        $storage = Storage::get('thumbnail');
-        if (!$storage->fileExists($storagePath)) {
-            Logger::debug('CIHUB: Storage file does not exists, queue generation');
-            $bus = \Pimcore::getContainer()->get('messenger.bus.pimcore-core');
-            $bus->dispatch(new AssetPreviewImageMessage(
-                $element->getId(),
-                $thumbnailName,
-            ));
             return $noThumbnailResponse;
         }
 
-        Logger::debug('CIHUB: Storage file does exists');
-        $response = new StreamedResponse(function () use ($storagePath, $storage): void {
-            fpassthru($storage->readStream($storagePath));
-        }, 200, [
-            'Content-Type' => $storage->mimeType($storagePath),
+        assert($thumbnailFile instanceof Asset\Thumbnail\ThumbnailInterface);
+
+        $pathReference = $thumbnailFile->getPathReference(true);
+
+        Logger::debug('CIHUB: Details about thumbnail to handle', [
+            'pathReference(defered)' => $pathReference,
+        ]);
+        // `type` key, will be always deferred, so instead of calling ::exists()
+        // we explicitly call ::existsOnStorage()
+        //if (!$thumbnailFile->exists()) {
+        if (!$thumbnailFile->existsOnStorage($pathReference)) {
+            $message = new AssetPreviewImageMessage($element->getId(), $thumbnailName);
+
+            if (ThumbnailService::isMessageQueued($message)) {
+                Logger::debug('CIHUB: No stream found yet preview generation is already queued, responding with no thumbnail');
+            }
+            else if (ThumbnailService::lockMessage($message)) {
+                Logger::debug('CIHUB: No stream found, responding with no thumbnail and queuing preview generation');
+                $bus = \Pimcore::getContainer()->get('messenger.bus.pimcore-core');
+                $bus->dispatch($message);
+                $bus->dispatch(new PimcoreAssetPreviewMessage($message->getId()));
+            }
+
+            return $noThumbnailResponse;
+        }
+
+        $stream = null;
+        try {
+            $stream = $thumbnailFile->getStream();
+        }
+        catch (UnableToReadFile $e) {
+            Logger::err($e->getMessage(), [
+                'id' => $element->getId(),
+                'filename' => $element->getFilename(),
+                'realpath' => $element->getRealPath(),
+                'checksum' => $element->getChecksum(),
+            ]);
+            return $noThumbnailResponse;
+        }
+
+        $mimeType = $thumbnailFile->getMimeType();
+        $response = new StreamedResponse(function () use ($stream): void {
+            fpassthru($stream);
+        }, Response::HTTP_OK, [
+            'Content-Type' => $mimeType,
             'Access-Control-Allow-Origin' => '*',
         ]);
 
-        // If it is not a thumbnail then send DISPOSITION_ATTACHMENT of the download.
-        if (!$this->request->request->has('thumbnail')) {
-            $filename = basename(rawurldecode((string) $thumbnailFile->getPath()));
-            $filenameFallback = preg_replace("/[^\w\-\.]/", '', $filename);
-            $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename, $filenameFallback);
-            $response->headers->set('Content-Length', $storage->fileSize($storagePath));
-        }
+        Logger::debug('CIHUB: preview data found for element, streaming normal preview response', [
+            'id' => $element->getId(),
+            'filename' => $element->getFilename(),
+            'realpath' => $element->getRealPath(),
+            'checksum' => $element->getChecksum(),
+        ]);
 
-        // Add cache to headers
         $this->addThumbnailCacheHeaders($response);
+        $response->setEtag($element->getCacheTag());
+
         return $response;
     }
 

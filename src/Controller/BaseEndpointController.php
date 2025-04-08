@@ -172,9 +172,9 @@ abstract class BaseEndpointController extends FrontendController
             if (\is_array($rawData)) {
                 $items = $rawData;
                 $filter = [];
-                foreach ($items as $item) {
-                    if (\is_string($item)) {
-                        $filter = $this->getValidFilter($item, $filter);
+                foreach ($items as $key => $value) {
+                    if (\is_string($key) && \is_string($value)) {// just like ::getValidFilter
+                        $filter[$key][] = $value;
                     }
                 }
             } elseif (is_json($rawData)) {
