@@ -15,11 +15,11 @@ namespace CIHub\Bundle\SimpleRESTAdapterBundle\Controller;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Exception\InvalidParameterException;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Helper\UploadHelper;
 use League\Flysystem\FilesystemException;
-use Nelmio\ApiDocBundle\Annotation\Security;
+use Nelmio\ApiDocBundle\Attribute\Security;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: ['/datahub/rest/{config}/upload', '/pimcore-datahub-webservices/simplerest/{config}/asset'], name: 'datahub_rest_endpoints_upload_')]
 #[Security(name: 'Bearer')]

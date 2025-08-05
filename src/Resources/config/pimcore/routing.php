@@ -17,5 +17,5 @@ return static function (RoutingConfigurator $routingConfigurator): void {
     $routingConfigurator->import([
         'path' => '../../../Controller/',
         'namespace' => 'CIHub\Bundle\SimpleRESTAdapterBundle\Controller',
-    ], 'annotation');
+    ], 'attribute');
 };

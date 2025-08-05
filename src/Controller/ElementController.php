@@ -16,7 +16,7 @@ use CIHub\Bundle\SimpleRESTAdapterBundle\Elasticsearch\Index\IndexPersistenceSer
 use CIHub\Bundle\SimpleRESTAdapterBundle\Helper\AssetHelper;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Reader\ConfigReader;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Traits\RestHelperTrait;
-use Nelmio\ApiDocBundle\Annotation\Security;
+use Nelmio\ApiDocBundle\Attribute\Security;
 use OpenApi\Attributes as OA;
 use Pimcore\Logger;
 use Pimcore\Model\AbstractModel;
@@ -30,7 +30,7 @@ use Pimcore\Model\Version\Listing;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: ['/datahub/rest/{config}/element', '/pimcore-datahub-webservices/simplerest/{config}'], name: 'datahub_rest_endpoints_element_')]
 #[Security(name: 'Bearer')]

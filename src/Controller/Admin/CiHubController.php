@@ -21,7 +21,7 @@ use Pimcore\Model\User;
 use Pimcore\Model\User\UserRole;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin/ci-hub')]
 final class CiHubController extends UserAwareController

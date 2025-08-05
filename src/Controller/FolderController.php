@@ -13,14 +13,14 @@ namespace CIHub\Bundle\SimpleRESTAdapterBundle\Controller;
 
 use CIHub\Bundle\SimpleRESTAdapterBundle\Exception\NotFoundException;
 use CIHub\Bundle\SimpleRESTAdapterBundle\Traits\RestHelperTrait;
-use Nelmio\ApiDocBundle\Annotation\Security;
+use Nelmio\ApiDocBundle\Attribute\Security;
 use OpenApi\Attributes as OA;
 use Pimcore\Model\Asset\Folder;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ValidationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: ['/datahub/rest/{config}/folder', '/pimcore-datahub-webservices/simplerest/{config}'], name: 'datahub_rest_endpoints_')]
 #[Security(name: 'Bearer')]

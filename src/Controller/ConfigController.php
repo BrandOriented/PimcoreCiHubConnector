@@ -28,7 +28,7 @@ use Pimcore\Model\Asset\Image\Thumbnail\Config\Listing;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Route('/admin/rest/config', name: 'datahub_rest_adapter_config_', options: ['expose' => true])]
