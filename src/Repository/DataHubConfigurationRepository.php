@@ -19,12 +19,15 @@ final class DataHubConfigurationRepository
 {
     public function findOneByName(string $name): ?Configuration
     {
-        return Dao::getByName($name);
+        return Configuration::getByName($name);
     }
 
+    /**
+     * @return Configuration[]
+     */
     public function all(): array
     {
-        return Dao::getList();
+        return Configuration::getList();
     }
 
     /**
@@ -34,17 +37,12 @@ final class DataHubConfigurationRepository
      */
     public function getList(array $allowedConfigTypes = []): array
     {
-        $list = Dao::getList();
+        $list = Configuration::getList();
 
         if ([] !== $allowedConfigTypes) {
             $list = array_filter($list, static fn ($config): bool => \in_array($config->getType(), $allowedConfigTypes, true));
         }
 
         return $list;
-    }
-
-    public function getModificationDate(): bool|int
-    {
-        return Dao::getConfigModificationDate();
     }
 }

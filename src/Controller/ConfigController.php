@@ -99,7 +99,7 @@ final class ConfigController extends AdminAbstractController
                 'update' => $configuration->isAllowed('update'),
                 'delete' => $configuration->isAllowed('delete'),
             ],
-            'modificationDate' => $configRepository->getModificationDate(),
+            'modificationDate' => $configuration->getModificationDate(),
         ]);
     }
 
@@ -188,7 +188,7 @@ final class ConfigController extends AdminAbstractController
             $configurationEvent = new ConfigurationEvent($newConfig, $oldConfig);
             $eventDispatcher->dispatch($configurationEvent, SimpleRESTAdapterEvents::CONFIGURATION_POST_SAVE);
 
-            return $this->json(['success' => true, 'modificationDate' => $configRepository->getModificationDate()]);
+            return $this->json(['success' => true, 'modificationDate' => $configuration->getModificationDate()]);
         } catch (\Exception $exception) {
             return $this->json(['success' => false, 'message' => $exception->getMessage()]);
         }
