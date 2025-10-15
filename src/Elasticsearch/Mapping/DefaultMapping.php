@@ -67,6 +67,7 @@ abstract class DefaultMapping implements MappingInterface
                 ],
                 'type' => ['type' => 'keyword'],
                 'subtype' => ['type' => 'keyword'],
+                'className' => ['type' => 'keyword'],
                 'parentId' => ['type' => 'long'],
                 'hasChildren' => ['type' => 'boolean'],
                 'creationDate' => ['type' => 'date'],

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This source file is subject to the GNU General Public License version 3 (GPLv3)
  * For the full copyright and license information, please view the LICENSE.md and gpl-3.0.txt
@@ -8,6 +9,7 @@
  * @copyright  Copyright (c) 2023 Brand Oriented sp. z o.o. (https://brandoriented.pl)
  * @copyright  Copyright (c) 2021 CI HUB GmbH (https://ci-hub.com)
  */
+
 declare(strict_types=1);
 
 namespace CIHub\Bundle\SimpleRESTAdapterBundle\Provider\Traits;
@@ -62,7 +64,7 @@ trait HasBaseAssetProvider
                     'width' => $element->getWidth(),
                     'height' => $element->getHeight(),
                 ],
-//                'xmpData' => $element->getXMPData() ?: null,
+                //                'xmpData' => $element->getXMPData() ?: null,
                 'exifData' => $element->getEXIFData() ?: null,
                 'iptcData' => $element->getIPTCData() ?: null,
             ]));
@@ -221,8 +223,7 @@ trait HasBaseAssetProvider
                 $pathReference = [];
                 try {
                     $pathReference = $thumbnail->getPathReference(true);
-                }
-                catch(\Throwable $e) {
+                } catch (\Throwable $e) {
                     $pathReference['type'] = 'error';
                 }
 
@@ -322,6 +323,7 @@ trait HasBaseAssetProvider
             'parentId' => $element->getParentId(),
             'type' => 'asset',
             'subtype' => $element->getType(),
+            'className' => null,
             'hasChildren' => $element->hasChildren(),
             'creationDate' => $element->getCreationDate(),
             'modificationDate' => $element->getModificationDate(),

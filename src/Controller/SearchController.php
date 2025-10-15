@@ -512,6 +512,10 @@ final class SearchController extends BaseEndpointController
                                                     property: 'subtype',
                                                     type: 'string',
                                                 ),
+                                                new OA\Property(
+                                                    property: 'className',
+                                                    type: 'string',
+                                                ),
                                             ]
                                         ),
                                     ),

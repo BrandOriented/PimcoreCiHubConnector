@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This source file is subject to the GNU General Public License version 3 (GPLv3)
  * For the full copyright and license information, please view the LICENSE.md and gpl-3.0.txt
@@ -8,6 +9,7 @@
  * @copyright  Copyright (c) 2023 Brand Oriented sp. z o.o. (https://brandoriented.pl)
  * @copyright  Copyright (c) 2021 CI HUB GmbH (https://ci-hub.com)
  */
+
 declare(strict_types=1);
 
 namespace CIHub\Bundle\SimpleRESTAdapterBundle\Provider\Traits;
@@ -104,6 +106,7 @@ trait HasDataObjectProvider
             'parentId' => $object->getParentId(),
             'type' => 'object',
             'subtype' => $object->getType(),
+            'className' => $object->getClassName(),
             'hasChildren' => $object->hasChildren(),
             'creationDate' => $object->getCreationDate(),
             'modificationDate' => $object->getModificationDate(),
@@ -115,21 +118,23 @@ trait HasDataObjectProvider
     {
         $helperDefinitions = $objectSchema['columnConfig'] ?? [];
 
-        $fields = array_map(function ($key, array $value): array {
-            $label = $key;
-            if (isset($value['fieldConfig'])) {
-                if (isset($value['fieldConfig']['label']) && $value['fieldConfig']['label']) {
-                    $label = $value['fieldConfig']['label'];
-                } elseif (isset($value['fieldConfig']['attributes']['label'])) {
-                    $label = $value['fieldConfig']['attributes']['label'] ?: $key;
+        $fields = array_map(
+            function ($key, array $value): array {
+                $label = $key;
+                if (isset($value['fieldConfig'])) {
+                    if (isset($value['fieldConfig']['label']) && $value['fieldConfig']['label']) {
+                        $label = $value['fieldConfig']['label'];
+                    } elseif (isset($value['fieldConfig']['attributes']['label'])) {
+                        $label = $value['fieldConfig']['attributes']['label'] ?: $key;
+                    }
                 }
-            }
 
-            return [
-                'key' => $key,
-                'label' => $label,
-            ];
-        }, array_keys($helperDefinitions),
+                return [
+                    'key' => $key,
+                    'label' => $label,
+                ];
+            },
+            array_keys($helperDefinitions),
             $helperDefinitions
         );
         foreach ($helperDefinitions as $k => $v) {
@@ -168,7 +173,7 @@ trait HasDataObjectProvider
                 $keyConfig = DataObject\Classificationstore\KeyConfig::getById($keyId);
 
                 if ($groupConfig && $keyConfig) {
-                    $field = $fieldNames.'~'.$groupConfig->getName().'~'.$keyConfig->getName();
+                    $field = $fieldNames . '~' . $groupConfig->getName() . '~' . $keyConfig->getName();
                 }
             }
         }

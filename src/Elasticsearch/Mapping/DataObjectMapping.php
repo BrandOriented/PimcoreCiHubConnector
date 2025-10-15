@@ -72,6 +72,9 @@ final class DataObjectMapping extends DefaultMapping
                     'subtype' => [
                         'type' => 'keyword',
                     ],
+                    'className' => [
+                        'type' => 'keyword',
+                    ],
                 ],
             ],
         ];
