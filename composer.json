@@ -33,7 +33,7 @@
   "prefer-stable": true,
   "minimum-stability": "stable",
   "require": {
-    "php": "^8.2 || ^8.3",
+    "php": "^8.2 || ^8.3 || ^8.4",
     "elasticsearch/elasticsearch": "^7.0 || ^8.9",
     "handcraftedinthealps/elasticsearch-dsl": "^8.0",
     "league/flysystem-bundle": "^3.2",
